@@ -5,6 +5,10 @@
 *.so
 *.dylib
 
+# make target
+/bin
+/target
+
 # Test binary, built with `go test -c`
 *.test
 

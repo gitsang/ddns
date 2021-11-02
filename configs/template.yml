@@ -1,0 +1,18 @@
+
+
+
+accesskeyid:
+accesskeysecret:
+domain:
+updateintervalmin: 5
+
+ddnslist:
+  - rrs:
+      - "home"
+      - "*.home"
+    record:
+      type: "AAAA"
+      interface: "enp1s0"
+      ipv6: true
+
+

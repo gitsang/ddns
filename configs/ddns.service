@@ -1,0 +1,12 @@
+[Unit]
+Description=DDNS Service
+Documentation=https://github.com/gitsang/ddns
+After=network.target nss-lookup.target
+
+[Service]
+User=root
+ExecStart=/usr/local/bin/ddns -c /usr/local/etc/ddns/ddns.conf -p /var/log/ddns.log
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
