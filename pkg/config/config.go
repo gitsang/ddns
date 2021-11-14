@@ -30,14 +30,16 @@ var Cfg Config
 func LoadConfig(file string) error {
 	err := configor.New(&configor.Config{
 		ENVPrefix:          "DDNS",
-		Verbose:            true,
 		AutoReload:         true,
 		AutoReloadInterval: time.Minute,
+		AutoReloadCallback: func(config interface{}) {
+			log.Debug("config auto reload", zap.Reflect("Cfg", Cfg))
+		},
 	}).Load(&Cfg, file)
 	if err != nil {
 		return err
 	}
 
-	log.Info("load config success", zap.Reflect("config", Cfg))
+	log.Info("load config success", zap.Reflect("Cfg", Cfg))
 	return nil
 }

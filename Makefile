@@ -13,9 +13,10 @@ pack: build
 
 install:
 
-	mkdir -p /usr/local/etc/ddns/bin /usr/local/etc/ddns/conf /usr/local/etc/ddns/log
-	cp bin/ddns             /usr/local/bin/ddns
-	cp configs/private.yml  /usr/local/etc/ddns/ddns.conf
+	cp bin/ddns /usr/local/bin/ddns
+	mkdir -p /usr/local/etc/ddns
+	cp configs/private.yml /usr/local/etc/ddns/ddns.conf
+	touch /var/log/ddns.log
 	cp configs/ddns.service /etc/systemd/system/ddns.service
 	systemctl status ddns
 
