@@ -1,26 +1,34 @@
+.PHONY: default help build docker
 
-default: build
+SERVICE_NAME=ddns
+TARGET_PATH=build
+DOCKER_REPO=hub.cn.sang.ink
+VERSION=$(shell git describe --tags)
 
-build:
+default: help
 
-	go build -o bin/ddns cmd/ddns.go
+help: ## show help
 
-pack: build 
+	@echo -e "Usage: \n\tmake \033[36m[option]\033[0m"
+	@echo -e "Options:"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\t\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-	mkdir -p target/bin target/conf target/log
-	cp bin/* target/bin/
-	cp configs/* target/conf/
 
-install:
+LD_FLAGS=-ldflags "-X ddns/pkg/config.Version=$(VERSION)"
 
-	cp bin/ddns /usr/local/bin/ddns
-	mkdir -p /usr/local/etc/ddns
-	cp configs/private.yml /usr/local/etc/ddns/ddns.conf
-	touch /var/log/ddns.log
-	cp configs/ddns.service /etc/systemd/system/ddns.service
-	systemctl status ddns
+build: ## build target
 
-uninstall:
+	mkdir -p $(TARGET_PATH) $(TARGET_PATH)/bin $(TARGET_PATH)/conf $(TARGET_PATH)/log
+	go build $(LD_FLAGS) -o $(TARGET_PATH)/bin/$(SERVICE_NAME) cmd/$(SERVICE_NAME).go
+	cp configs/template.yml $(TARGET_PATH)/conf
 
-	rm -fr /usr/local/bin/ddns /usr/local/etc/ddns /etc/systemd/system/ddns.service
+
+docker: build ## build docker and push
+
+	docker build -f Dockerfile --no-cache \
+		--build-arg DOCKER_PACKAGE_PATH=$(TARGET_PATH) \
+		-t $(DOCKER_REPO)/$(SERVICE_NAME):$(VERSION) .
+	docker tag $(DOCKER_REPO)/$(SERVICE_NAME):$(VERSION) $(DOCKER_REPO)/$(SERVICE_NAME):latest
+	docker push $(DOCKER_REPO)/$(SERVICE_NAME):$(VERSION)
+	docker push $(DOCKER_REPO)/$(SERVICE_NAME):latest
 

@@ -8,6 +8,7 @@
 # make target
 /bin
 /target
+/build
 
 # Test binary, built with `go test -c`
 *.test

@@ -6,6 +6,7 @@ import (
 	"flag"
 
 	log "github.com/gitsang/golog"
+	"go.uber.org/zap"
 )
 
 var (
@@ -45,6 +46,8 @@ func main() {
 		log.WithLogFile(logFile),
 		log.WithLogFileCompress(true))
 
+	log.Info("start ddns", zap.String("version", config.Version),
+		zap.Reflect("config", config.Cfg))
 	err = service.DdnsStart()
 	if err != nil {
 		panic(err)

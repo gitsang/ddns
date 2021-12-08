@@ -8,6 +8,8 @@ import (
 	"go.uber.org/zap"
 )
 
+var Version = "unknown"
+
 type DDNS struct {
 	RRs    []string
 	Record struct {
