@@ -32,3 +32,16 @@ docker: build ## build docker and push
 	docker push $(DOCKER_REPO)/$(SERVICE_NAME):$(VERSION)
 	docker push $(DOCKER_REPO)/$(SERVICE_NAME):latest
 
+run:
+
+	mkdir -p /data/ddns/conf /data/ddns/log
+	cp configs/private.yml /data/ddns/conf/ddns.yml
+	docker pull $(DOCKER_REPO)/$(SERVICE_NAME):latest
+	docker rm -f ddns
+	docker run -d \
+		--name ddns \
+		--restart always \
+		--network host \
+		-v /data/ddns/conf/ddns.yml:/opt/ddns/conf/ddns.yml \
+		-v /data/ddns/log:/opt/ddns/log \
+		$(DOCKER_REPO)/$(SERVICE_NAME):latest
