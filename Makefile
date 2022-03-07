@@ -22,21 +22,25 @@ build: ## build target
 	go build $(LD_FLAGS) -o $(TARGET_PATH)/bin/$(SERVICE_NAME) cmd/$(SERVICE_NAME).go
 	cp configs/template.yml $(TARGET_PATH)/conf
 
-
 docker: build ## build docker and push
 
 	docker build -f Dockerfile --no-cache \
 		--build-arg DOCKER_PACKAGE_PATH=$(TARGET_PATH) \
 		-t $(DOCKER_REPO)/$(SERVICE_NAME):$(VERSION) .
 	docker tag $(DOCKER_REPO)/$(SERVICE_NAME):$(VERSION) $(DOCKER_REPO)/$(SERVICE_NAME):latest
+
+publish: docker ## publish docker to docker repo
+
 	docker push $(DOCKER_REPO)/$(SERVICE_NAME):$(VERSION)
 	docker push $(DOCKER_REPO)/$(SERVICE_NAME):latest
 
-run:
+pull: ## pull latest published docker
+
+	docker pull $(DOCKER_REPO)/$(SERVICE_NAME):latest
+
+install: docker ## build docker and run
 
 	mkdir -p /data/ddns/conf /data/ddns/log
-	cp configs/private.yml /data/ddns/conf/ddns.yml
-	docker pull $(DOCKER_REPO)/$(SERVICE_NAME):latest
 	docker rm -f ddns
 	docker run -d \
 		--name ddns \
