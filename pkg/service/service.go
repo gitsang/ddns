@@ -35,6 +35,7 @@ func UpdateDns() {
 			log.Error("get interface ip failed", append(logFields, zap.Error(err))...)
 			continue
 		}
+		logFields = append(logFields, zap.String("ip", ip))
 
 		record := api.FindRecordByRR(records, ddns.RR)
 		if record == nil { // create

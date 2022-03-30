@@ -5,14 +5,11 @@ accesskeyid:
 accesskeysecret:
 domain:
 updateintervalmin: 5
+ddnss:
+  - type: "A"
+    rr: "x.home"
+    interface: "ens18"
+    prefix: "192.168"
 
-ddnslist:
-  - rrs:
-      - "home"
-      - "*.home"
-    record:
-      type: "AAAA"
-      interface: "enp1s0"
-      ipv6: true
 
 
