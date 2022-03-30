@@ -2,7 +2,7 @@
 
 SERVICE_NAME=ddns
 TARGET_PATH=build
-DOCKER_REPO=hub.cn.sang.ink
+DOCKER_REPO=gitsang
 VERSION=$(shell git describe --tags)
 
 default: help
@@ -22,7 +22,7 @@ build: ## build target
 	go build $(LD_FLAGS) -o $(TARGET_PATH)/bin/$(SERVICE_NAME) cmd/$(SERVICE_NAME).go
 	cp configs/template.yml $(TARGET_PATH)/conf
 
-docker: build ## build docker and push
+docker: build ## build docker
 
 	docker build -f Dockerfile --no-cache \
 		--build-arg DOCKER_PACKAGE_PATH=$(TARGET_PATH) \
