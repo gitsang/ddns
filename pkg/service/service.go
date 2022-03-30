@@ -27,42 +27,40 @@ func UpdateDns() {
 		return
 	}
 
-	for _, ddns := range config.Cfg.DdnsList {
-		recordType := ddns.Record.Type
-		value, err := utils.GetIp(ddns.Record.Ipv6, true, ddns.Record.Interface)
+	for _, ddns := range config.Cfg.DDNSs {
+		logFields := []zap.Field{zap.Reflect("ddns", ddns)}
+
+		ip, err := utils.GetIpWithPrefix(ddns.Interface, ddns.Prefix)
 		if err != nil {
-			log.Error("get interface ip failed", zap.Reflect("ddns", ddns), zap.Error(err))
+			log.Error("get interface ip failed", append(logFields, zap.Error(err))...)
 			continue
 		}
 
-		for _, rr := range ddns.RRs {
-			record := api.FindRecordByRR(records, rr)
-			if record == nil {
-				log.Info("record not found, create new (not implement)")
+		record := api.FindRecordByRR(records, ddns.RR)
+		if record == nil { // create
+			err = api.CreateRecord(client, config.Cfg.Domain, ddns.RR, ddns.Type, ip)
+			if err != nil {
+				log.Error("create record failed", append(logFields, zap.Error(err))...)
 				continue
 			}
 
+		} else { // update
 			recordId := *record.RecordId
 			recordValue := *record.Value
-			logFields := []zap.Field{
-				zap.String("rr", rr),
-				zap.String("recordId", recordId),
-				zap.String("recordType", recordType),
-				zap.String("value", value),
-			}
-
-			if recordValue == value {
+			logFields = append(logFields, zap.String("recordId", recordId), zap.String("recordValue", recordValue))
+			if recordValue == ip {
 				log.Info("record not change, skip", logFields...)
 				continue
 			}
 
-			err = api.UpdateRecord(client, recordId, rr, recordType, value)
+			err = api.UpdateRecord(client, recordId, ddns.RR, ddns.Type, ip)
 			if err != nil {
 				log.Error("update record failed", append(logFields, zap.Error(err))...)
+				continue
 			}
-
-			log.Info("update record success", logFields...)
 		}
+
+		log.Info("update record success", logFields...)
 	}
 }
 

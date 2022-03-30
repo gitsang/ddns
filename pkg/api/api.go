@@ -66,3 +66,18 @@ func UpdateRecord(client *alidns20150109.Client, id, rr, typ, value string) erro
 
 	return nil
 }
+
+func CreateRecord(client *alidns20150109.Client, domain, rr, typ, value string) error {
+	addDomainRecordRequest := &alidns20150109.AddDomainRecordRequest{
+		DomainName: tea.String(domain),
+		RR:         tea.String(rr),
+		Type:       tea.String(typ),
+		Value:      tea.String(value),
+	}
+	_, err := client.AddDomainRecord(addDomainRecordRequest)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

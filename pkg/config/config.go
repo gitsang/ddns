@@ -10,21 +10,17 @@ import (
 
 var Version = "unknown"
 
-type DDNS struct {
-	RRs    []string
-	Record struct {
-		Type      string
-		Interface string
-		Ipv6      bool
-	}
-}
-
 type Config struct {
 	AccessKeyId       string
 	AccessKeySecret   string
 	Domain            string
 	UpdateIntervalMin int
-	DdnsList          []DDNS
+	DDNSs             []struct {
+		Type      string
+		RR        string
+		Interface string
+		Prefix    string
+	}
 }
 
 var Cfg Config
