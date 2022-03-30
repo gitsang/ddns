@@ -68,7 +68,6 @@ func UpdateDns() {
 func DdnsStart() error {
 	ticker := time.Tick(time.Duration(config.Cfg.UpdateIntervalMin) * time.Minute)
 	for {
-		log.Info("start updateDns")
 		UpdateDns()
 
 		select {
