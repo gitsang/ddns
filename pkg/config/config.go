@@ -31,7 +31,7 @@ func LoadConfig(file string) error {
 		AutoReload:         true,
 		AutoReloadInterval: time.Minute,
 		AutoReloadCallback: func(config interface{}) {
-			log.Debug("config auto reload", zap.Reflect("Cfg", Cfg))
+			log.Info("config auto reload", zap.Reflect("Cfg", Cfg))
 		},
 	}).Load(&Cfg, file)
 	if err != nil {
