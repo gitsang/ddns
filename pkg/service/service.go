@@ -28,6 +28,9 @@ func UpdateDns() {
 	}
 
 	for _, ddns := range config.Cfg.DDNSs {
+		if !ddns.Enable {
+			continue
+		}
 		logFields := []zap.Field{zap.Reflect("ddns", ddns)}
 
 		ip, err := utils.GetIpWithPrefix(ddns.Interface, ddns.Prefix)

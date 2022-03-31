@@ -4,12 +4,25 @@
 accesskeyid:
 accesskeysecret:
 domain:
-updateintervalmin: 5
+updateintervalmin: 60
 ddnss:
-  - type: "A"
-    rr: "x.home"
+  - enable: false
+    type: "A"
+    rr: "template.home"
     interface: "ens18"
     prefix: "192.168"
-
-
-
+  - enable: false
+    type: "A"
+    rr: "*.template.home"
+    interface: "ens18"
+    prefix: "192.168"
+  - enable: false
+    type: "AAAA"
+    rr: "template6.home"
+    interface: "ens18"
+    prefix: "240e"
+  - enable: false
+    type: "AAAA"
+    rr: "*.template6.home"
+    interface: "ens18"
+    prefix: "240e"

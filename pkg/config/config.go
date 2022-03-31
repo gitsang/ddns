@@ -16,6 +16,7 @@ type Config struct {
 	Domain            string
 	UpdateIntervalMin int
 	DDNSs             []struct {
+		Enable    bool
 		Type      string
 		RR        string
 		Interface string
