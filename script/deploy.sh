@@ -4,6 +4,9 @@ VERSION=v0.0.10
 BIN_PATH=/usr/local/bin
 SERVICE_PATH=/etc/systemd/system
 CONF_PATH=/usr/local/etc/ddns
+LOG_PATH=/var/log/ddns
+
+mkdir -p ${BIN_PATH} ${SERVICE_PATH} ${CONF_PATH} ${LOG_PATH}
 
 wget https://github.com/gitsang/ddns/releases/download/${VERSION}/ddns -O ${BIN_PATH}/ddns
 wget https://github.com/gitsang/ddns/releases/download/${VERSION}/ddns.service -O ${SERVICE_PATH}/ddns.service
