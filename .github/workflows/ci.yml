@@ -1,0 +1,44 @@
+name: ci
+
+on:
+  create:
+    tags:
+      - v*
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Get Version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+        shell: bash
+
+      - name: Login Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Build and Push Docker
+        shell: bash
+        run: |
+          SERVICE_NAME=ddns
+          TARGET_PATH=build
+          DOCKER_REPO=gitsang
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+
+          mkdir -p ${TARGET_PATH} ${TARGET_PATH}/bin ${TARGET_PATH}/conf ${TARGET_PATH}/log
+          go build ${LD_FLAGS} -o ${TARGET_PATH}/bin/${SERVICE_NAME} cmd/${SERVICE_NAME}.go
+          cp configs/template.yml ${TARGET_PATH}/conf
+
+          docker build -f Dockerfile --no-cache \
+              --build-arg DOCKER_PACKAGE_PATH=${TARGET_PATH} \
+              -t ${DOCKER_REPO}/${SERVICE_NAME}:${VERSION} .
+          docker tag ${DOCKER_REPO}/${SERVICE_NAME}:${VERSION} ${DOCKER_REPO}/${SERVICE_NAME}:latest
+
+          docker push ${DOCKER_REPO}/${SERVICE_NAME}:${VERSION}
+          docker push ${DOCKER_REPO}/${SERVICE_NAME}:latest

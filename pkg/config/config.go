@@ -10,21 +10,18 @@ import (
 
 var Version = "unknown"
 
-type DDNS struct {
-	RRs    []string
-	Record struct {
-		Type      string
-		Interface string
-		Ipv6      bool
-	}
-}
-
 type Config struct {
 	AccessKeyId       string
 	AccessKeySecret   string
 	Domain            string
 	UpdateIntervalMin int
-	DdnsList          []DDNS
+	DDNSs             []struct {
+		Enable    bool
+		Type      string
+		RR        string
+		Interface string
+		Prefix    string
+	}
 }
 
 var Cfg Config
@@ -35,7 +32,7 @@ func LoadConfig(file string) error {
 		AutoReload:         true,
 		AutoReloadInterval: time.Minute,
 		AutoReloadCallback: func(config interface{}) {
-			log.Debug("config auto reload", zap.Reflect("Cfg", Cfg))
+			log.Info("config auto reload", zap.Reflect("Cfg", Cfg))
 		},
 	}).Load(&Cfg, file)
 	if err != nil {

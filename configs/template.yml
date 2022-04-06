@@ -4,15 +4,25 @@
 accesskeyid:
 accesskeysecret:
 domain:
-updateintervalmin: 5
-
-ddnslist:
-  - rrs:
-      - "home"
-      - "*.home"
-    record:
-      type: "AAAA"
-      interface: "enp1s0"
-      ipv6: true
-
-
+updateintervalmin: 60
+ddnss:
+  - enable: false
+    type: "A"
+    rr: "template.home"
+    interface: "ens18"
+    prefix: "192.168"
+  - enable: false
+    type: "A"
+    rr: "*.template.home"
+    interface: "ens18"
+    prefix: "192.168"
+  - enable: false
+    type: "AAAA"
+    rr: "template6.home"
+    interface: "ens18"
+    prefix: "240e"
+  - enable: false
+    type: "AAAA"
+    rr: "*.template6.home"
+    interface: "ens18"
+    prefix: "240e"

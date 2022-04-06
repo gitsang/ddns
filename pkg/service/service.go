@@ -27,49 +27,50 @@ func UpdateDns() {
 		return
 	}
 
-	for _, ddns := range config.Cfg.DdnsList {
-		recordType := ddns.Record.Type
-		value, err := utils.GetIp(ddns.Record.Ipv6, true, ddns.Record.Interface)
-		if err != nil {
-			log.Error("get interface ip failed", zap.Reflect("ddns", ddns), zap.Error(err))
+	for _, ddns := range config.Cfg.DDNSs {
+		if !ddns.Enable {
 			continue
 		}
+		logFields := []zap.Field{zap.Reflect("ddns", ddns)}
 
-		for _, rr := range ddns.RRs {
-			record := api.FindRecordByRR(records, rr)
-			if record == nil {
-				log.Info("record not found, create new (not implement)")
+		ip, err := utils.GetIpWithPrefix(ddns.Interface, ddns.Prefix)
+		if err != nil {
+			log.Error("get interface ip failed", append(logFields, zap.Error(err))...)
+			continue
+		}
+		logFields = append(logFields, zap.String("ip", ip))
+
+		record := api.FindRecordByRR(records, ddns.RR)
+		if record == nil { // create
+			err = api.CreateRecord(client, config.Cfg.Domain, ddns.RR, ddns.Type, ip)
+			if err != nil {
+				log.Error("create record failed", append(logFields, zap.Error(err))...)
 				continue
 			}
 
+		} else { // update
 			recordId := *record.RecordId
 			recordValue := *record.Value
-			logFields := []zap.Field{
-				zap.String("rr", rr),
-				zap.String("recordId", recordId),
-				zap.String("recordType", recordType),
-				zap.String("value", value),
-			}
-
-			if recordValue == value {
+			logFields = append(logFields, zap.String("recordId", recordId), zap.String("recordValue", recordValue))
+			if recordValue == ip {
 				log.Info("record not change, skip", logFields...)
 				continue
 			}
 
-			err = api.UpdateRecord(client, recordId, rr, recordType, value)
+			err = api.UpdateRecord(client, recordId, ddns.RR, ddns.Type, ip)
 			if err != nil {
 				log.Error("update record failed", append(logFields, zap.Error(err))...)
+				continue
 			}
-
-			log.Info("update record success", logFields...)
 		}
+
+		log.Info("update record success", logFields...)
 	}
 }
 
 func DdnsStart() error {
 	ticker := time.Tick(time.Duration(config.Cfg.UpdateIntervalMin) * time.Minute)
 	for {
-		log.Info("start updateDns")
 		UpdateDns()
 
 		select {
