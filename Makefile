@@ -16,11 +16,23 @@ help: ## show help
 
 LD_FLAGS=-ldflags "-X ddns/pkg/config.Version=$(VERSION)"
 
-build: ## build target
+clean: ## clean build target
+
+	rm -fr $(TARGET_PATH)
+	rm -f *.tar.gz
+
+build: clean ## build target
 
 	mkdir -p $(TARGET_PATH) $(TARGET_PATH)/bin $(TARGET_PATH)/conf $(TARGET_PATH)/log
 	go build $(LD_FLAGS) -o $(TARGET_PATH)/bin/$(SERVICE_NAME) cmd/$(SERVICE_NAME).go
 	cp configs/template.yml $(TARGET_PATH)/conf
+	cp configs/ddns.service $(TARGET_PATH)/conf
+
+tag: build ## make tgz package
+
+	cp -r $(TARGET_PATH) $(SERVICE_NAME)
+	tar zcvf $(SERVICE_NAME).$(VERSION).tar.gz $(SERVICE_NAME)
+	rm -fr $(SERVICE_NAME)
 
 docker: build ## build docker
 
@@ -38,7 +50,7 @@ pull: ## pull latest published docker
 
 	docker pull $(DOCKER_REPO)/$(SERVICE_NAME):latest
 
-install: build ## install by systemd
+install: ## install by systemd
 
 	cp $(TARGET_PATH)/bin/$(SERVICE_NAME) /usr/local/bin/
 	cp configs/ddns.service /etc/systemd/system/
