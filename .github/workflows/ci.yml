@@ -30,6 +30,7 @@ jobs:
           TARGET_PATH=build
           DOCKER_REPO=gitsang
           VERSION=${{ steps.get_version.outputs.VERSION }}
+          LD_FLAGS="-ldflags -X ddns/pkg/config.Version=${VERSION}"
 
           mkdir -p ${TARGET_PATH} ${TARGET_PATH}/bin ${TARGET_PATH}/conf ${TARGET_PATH}/log
           go build ${LD_FLAGS} -o ${TARGET_PATH}/bin/${SERVICE_NAME} cmd/${SERVICE_NAME}.go

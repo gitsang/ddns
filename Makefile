@@ -38,7 +38,14 @@ pull: ## pull latest published docker
 
 	docker pull $(DOCKER_REPO)/$(SERVICE_NAME):latest
 
-install: docker ## build docker and run
+install: build ## install by systemd
+
+	cp $(TARGET_PATH)/bin/$(SERVICE_NAME) /usr/local/bin/
+	cp configs/ddns.service /etc/systemd/system/
+	cp configs/template.yml /usr/local/etc/ddns/ddns.yml
+	mkdir -p /var/log/ddns/
+
+docker-install: docker ## build docker and run
 
 	mkdir -p /data/ddns/conf /data/ddns/log
 	docker rm -f ddns

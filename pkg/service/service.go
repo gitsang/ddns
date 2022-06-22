@@ -53,7 +53,7 @@ func UpdateDns() {
 			recordValue := *record.Value
 			logFields = append(logFields, zap.String("recordId", recordId), zap.String("recordValue", recordValue))
 			if recordValue == ip {
-				log.Info("record not change, skip", logFields...)
+				log.Debug("record not change, skip", logFields...)
 				continue
 			}
 
