@@ -28,6 +28,13 @@ build: clean ## build target
 	cp configs/template.yml $(TARGET_PATH)/conf
 	cp configs/ddns.service $(TARGET_PATH)/conf
 
+download: ## download package
+
+	mkdir -p $(TARGET_PATH) $(TARGET_PATH)/bin $(TARGET_PATH)/conf $(TARGET_PATH)/log
+	wget -c https://github.com/gitsang/ddns/releases/download/v0.0.11/ddns         -P $(TARGET_PATH)/bin/
+	wget -c https://github.com/gitsang/ddns/releases/download/v0.0.11/template.yml -P $(TARGET_PATH)/conf/
+	wget -c https://github.com/gitsang/ddns/releases/download/v0.0.11/ddns.service -P $(TARGET_PATH)/conf/
+
 tag: build ## make tgz package
 
 	cp -r $(TARGET_PATH) $(SERVICE_NAME)
