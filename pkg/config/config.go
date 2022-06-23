@@ -39,6 +39,6 @@ func LoadConfig(file string) error {
 		return err
 	}
 
-	log.Info("load config success", zap.Reflect("Cfg", Cfg))
+	log.Debug("load config success", zap.Reflect("Cfg", Cfg))
 	return nil
 }
