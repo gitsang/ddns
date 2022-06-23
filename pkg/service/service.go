@@ -47,6 +47,7 @@ func UpdateDns() {
 				log.Error("create record failed", append(logFields, zap.Error(err))...)
 				continue
 			}
+			log.Info("create record success", logFields...)
 
 		} else { // update
 			recordId := *record.RecordId
@@ -62,9 +63,9 @@ func UpdateDns() {
 				log.Error("update record failed", append(logFields, zap.Error(err))...)
 				continue
 			}
+			log.Info("update record success", logFields...)
 		}
 
-		log.Info("update record success", logFields...)
 	}
 }
 
