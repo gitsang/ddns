@@ -26,6 +26,11 @@ func UpdateDns() {
 		log.Error("list record failed", zap.Error(err))
 		return
 	}
+	if len(records) == 0 {
+		log.Error("record not found")
+		return
+	}
+	log.Info("describe domain records", zap.Reflect("records", records))
 
 	for _, ddns := range config.Cfg.DDNSs {
 		if !ddns.Enable {
