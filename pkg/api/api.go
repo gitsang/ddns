@@ -1,8 +1,6 @@
 package api
 
 import (
-	"ddns/pkg/utils"
-
 	alidns20150109 "github.com/alibabacloud-go/alidns-20150109/v2/client"
 	openapi "github.com/alibabacloud-go/darabonba-openapi/client"
 	"github.com/alibabacloud-go/tea/tea"
@@ -24,32 +22,28 @@ func CreateClient(accessKeyId string, accessKeySecret string) (_result *alidns20
 	return _result, _err
 }
 
-func DescribeDomainRecords(client *alidns20150109.Client, domainName string) (
-	[]*alidns20150109.DescribeDomainRecordsResponseBodyDomainRecordsRecord, error) {
+func FindRecordByRR(client *alidns20150109.Client, domainName, rr string) (
+	*alidns20150109.DescribeDomainRecordsResponseBodyDomainRecordsRecord, error) {
 
 	describeDomainRecordsRequest := &alidns20150109.DescribeDomainRecordsRequest{
 		DomainName: tea.String(domainName),
+		KeyWord:    tea.String(rr),
+		SearchMode: tea.String("EXACT"),
 	}
 	resp, err := client.DescribeDomainRecords(describeDomainRecordsRequest)
 	if err != nil {
 		return nil, err
 	}
 	records := resp.Body.DomainRecords.Record
-
-	log.Debug(utils.FUNCTION()+"success", zap.Reflect("records", records))
-	return records, nil
-}
-
-func FindRecordByRR(
-	records []*alidns20150109.DescribeDomainRecordsResponseBodyDomainRecordsRecord,
-	rr string) *alidns20150109.DescribeDomainRecordsResponseBodyDomainRecordsRecord {
+	log.Debug("describe domain records success", zap.Reflect("records", records))
 
 	for _, rec := range records {
 		if *rec.RR == rr {
-			return rec
+			return rec, nil
 		}
 	}
-	return nil
+
+	return nil, nil
 }
 
 func UpdateRecord(client *alidns20150109.Client, id, rr, typ, value string) error {

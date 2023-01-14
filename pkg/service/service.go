@@ -21,23 +21,13 @@ func UpdateDns() {
 		return
 	}
 
-	records, err := api.DescribeDomainRecords(client, config.Cfg.Domain)
-	if err != nil {
-		log.Error("list record failed", zap.Error(err))
-		return
-	}
-	if len(records) == 0 {
-		log.Error("record not found")
-		return
-	}
-	log.Info("describe domain records", zap.Reflect("records", records))
-
 	for _, ddns := range config.Cfg.DDNSs {
 		if !ddns.Enable {
-			continue
+			return
 		}
 		logFields := []zap.Field{zap.Reflect("ddns", ddns)}
 
+		// get ip
 		ip, err := utils.GetIpWithPrefix(ddns.Interface, ddns.Prefix)
 		if err != nil {
 			log.Error("get interface ip failed", append(logFields, zap.Error(err))...)
@@ -45,7 +35,15 @@ func UpdateDns() {
 		}
 		logFields = append(logFields, zap.String("ip", ip))
 
-		record := api.FindRecordByRR(records, ddns.RR)
+		// find record
+		record, err := api.FindRecordByRR(client, config.Cfg.Domain, ddns.RR)
+		if err != nil {
+			log.Error("find record by rr failed", append(logFields, zap.Error(err))...)
+			continue
+		}
+		logFields = append(logFields, zap.Reflect("record", record))
+
+		// create or update
 		if record == nil { // create
 			err = api.CreateRecord(client, config.Cfg.Domain, ddns.RR, ddns.Type, ip)
 			if err != nil {
