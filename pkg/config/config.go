@@ -11,10 +11,16 @@ import (
 var Version = "unknown"
 
 type Config struct {
+	Log struct {
+		Level string `default:"info"`
+		File  string `default:"/opt/ddns/log/ddns.log"`
+	}
+
 	AccessKeyId       string
 	AccessKeySecret   string
-	UpdateIntervalMin int
-	DDNSs             []struct {
+	UpdateIntervalMin int `default:"60"`
+
+	DDNSs []struct {
 		Enable    bool
 		Domain    string
 		Type      string

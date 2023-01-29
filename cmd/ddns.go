@@ -42,8 +42,8 @@ func main() {
 	}
 
 	log.InitLogger(
-		log.WithLogLevel(log.LevelInfo),
-		log.WithLogFile(logFile),
+		log.WithLogLevel(config.Cfg.Log.Level),
+		log.WithLogFile(config.Cfg.Log.File),
 		log.WithLogFileCompress(true))
 
 	log.Info("start ddns", zap.String("version", config.Version),
