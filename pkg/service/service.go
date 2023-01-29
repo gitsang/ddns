@@ -36,7 +36,7 @@ func UpdateDns() {
 		logFields = append(logFields, zap.String("ip", ip))
 
 		// find record
-		record, err := api.FindRecordByRR(client, config.Cfg.Domain, ddns.RR)
+		record, err := api.FindRecordByRR(client, ddns.Domain, ddns.RR)
 		if err != nil {
 			log.Error("find record by rr failed", append(logFields, zap.Error(err))...)
 			continue
@@ -45,7 +45,7 @@ func UpdateDns() {
 
 		// create or update
 		if record == nil { // create
-			err = api.CreateRecord(client, config.Cfg.Domain, ddns.RR, ddns.Type, ip)
+			err = api.CreateRecord(client, ddns.Domain, ddns.RR, ddns.Type, ip)
 			if err != nil {
 				log.Error("create record failed", append(logFields, zap.Error(err))...)
 				continue

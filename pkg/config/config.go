@@ -13,10 +13,10 @@ var Version = "unknown"
 type Config struct {
 	AccessKeyId       string
 	AccessKeySecret   string
-	Domain            string
 	UpdateIntervalMin int
 	DDNSs             []struct {
 		Enable    bool
+		Domain    string
 		Type      string
 		RR        string
 		Interface string
