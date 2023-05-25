@@ -22,13 +22,14 @@ func CreateClient(accessKeyId string, accessKeySecret string) (_result *alidns20
 	return _result, _err
 }
 
-func FindRecordByRR(client *alidns20150109.Client, domainName, rr string) (
+func FindRecord(client *alidns20150109.Client, domainName, rr, typ string) (
 	*alidns20150109.DescribeDomainRecordsResponseBodyDomainRecordsRecord, error) {
 
 	describeDomainRecordsRequest := &alidns20150109.DescribeDomainRecordsRequest{
-		DomainName: tea.String(domainName),
-		KeyWord:    tea.String(rr),
-		SearchMode: tea.String("EXACT"),
+		DomainName:  tea.String(domainName),
+		KeyWord:     tea.String(rr),
+		SearchMode:  tea.String("EXACT"),
+		TypeKeyWord: tea.String(typ),
 	}
 	resp, err := client.DescribeDomainRecords(describeDomainRecordsRequest)
 	if err != nil {
@@ -71,6 +72,52 @@ func CreateRecord(client *alidns20150109.Client, domain, rr, typ, value string) 
 	_, err := client.AddDomainRecord(addDomainRecordRequest)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func UpdateOrCreateRecord(client *alidns20150109.Client, domain, rr, typ, rec string) error {
+	logFields := []zap.Field{
+		zap.String("domain", domain),
+		zap.String("rr", rr),
+		zap.String("typ", typ),
+		zap.String("rec", rec),
+	}
+	defer func() {
+		log.Info("UpdateOrCreateRecord end", logFields...)
+	}()
+
+	// find record
+	record, err := FindRecord(client, domain, rr, typ)
+	if err != nil {
+		return err
+	}
+
+	// create or update
+	if record == nil { // create
+		err = CreateRecord(client, domain, rr, typ, rec)
+		if err != nil {
+			logFields = append(logFields, zap.Error(err))
+			return err
+		}
+		logFields = append(logFields, zap.String("message", "create record success"))
+	} else { // update
+		recordId := *record.RecordId
+		recordValue := *record.Value
+		logFields = append(logFields, zap.String("recordId", recordId), zap.String("recordValue", recordValue))
+
+		if recordValue == rec {
+			logFields = append(logFields, zap.String("message", "record not change, skip"))
+			return nil
+		}
+
+		err = UpdateRecord(client, recordId, rr, typ, rec)
+		if err != nil {
+			logFields = append(logFields, zap.Error(err))
+			return err
+		}
+		logFields = append(logFields, zap.String("message", "update record success"))
 	}
 
 	return nil

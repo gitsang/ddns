@@ -35,40 +35,11 @@ func UpdateDns() {
 		}
 		logFields = append(logFields, zap.String("ip", ip))
 
-		// find record
-		record, err := api.FindRecordByRR(client, ddns.Domain, ddns.RR)
+		err = api.UpdateOrCreateRecord(client, ddns.Domain, ddns.RR, ddns.Type, ip)
 		if err != nil {
-			log.Error("find record by rr failed", append(logFields, zap.Error(err))...)
+			log.Error("update or create record failed", append(logFields, zap.Error(err))...)
 			continue
 		}
-		logFields = append(logFields, zap.Reflect("record", record))
-
-		// create or update
-		if record == nil { // create
-			err = api.CreateRecord(client, ddns.Domain, ddns.RR, ddns.Type, ip)
-			if err != nil {
-				log.Error("create record failed", append(logFields, zap.Error(err))...)
-				continue
-			}
-			log.Info("create record success", logFields...)
-
-		} else { // update
-			recordId := *record.RecordId
-			recordValue := *record.Value
-			logFields = append(logFields, zap.String("recordId", recordId), zap.String("recordValue", recordValue))
-			if recordValue == ip {
-				log.Debug("record not change, skip", logFields...)
-				continue
-			}
-
-			err = api.UpdateRecord(client, recordId, ddns.RR, ddns.Type, ip)
-			if err != nil {
-				log.Error("update record failed", append(logFields, zap.Error(err))...)
-				continue
-			}
-			log.Info("update record success", logFields...)
-		}
-
 	}
 }
 
