@@ -26,10 +26,10 @@ func FindRecord(client *alidns20150109.Client, domainName, rr, typ string) (
 	*alidns20150109.DescribeDomainRecordsResponseBodyDomainRecordsRecord, error) {
 
 	describeDomainRecordsRequest := &alidns20150109.DescribeDomainRecordsRequest{
-		DomainName: tea.String(domainName),
-		KeyWord:    tea.String(rr),
-		Type:       tea.String(typ),
-		SearchMode: tea.String("EXACT"),
+		DomainName:  tea.String(domainName),
+		RRKeyWord:   tea.String(rr),
+		TypeKeyWord: tea.String(typ),
+		SearchMode:  tea.String("EXACT"),
 	}
 	resp, err := client.DescribeDomainRecords(describeDomainRecordsRequest)
 	if err != nil {
