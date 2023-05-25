@@ -18,7 +18,7 @@ jobs:
         shell: bash
 
       - name: Login Docker Hub
-        uses: docker/login-action@main
+        uses: docker/login-action@master
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
