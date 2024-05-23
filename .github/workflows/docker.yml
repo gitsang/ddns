@@ -1,4 +1,4 @@
-name: ci
+name: docker
 
 on:
   create:
@@ -32,15 +32,13 @@ jobs:
           VERSION=${{ steps.get_version.outputs.VERSION }}
 
           mkdir -p ${TARGET_PATH} ${TARGET_PATH}/bin ${TARGET_PATH}/conf ${TARGET_PATH}/log
-          go build \
+          CGO_ENABLED=0 go build \
             -ldflags "-X ddns/pkg/config.Version=${VERSION}" \
             -o ${TARGET_PATH}/bin/${SERVICE_NAME} cmd/${SERVICE_NAME}.go
           cp configs/template.yml ${TARGET_PATH}/conf
 
-          docker build -f Dockerfile --no-cache \
+          docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v6/linux/arm/v7,linux/arm/v8 \
+              -f Dockerfile --no-cache \
               --build-arg DOCKER_PACKAGE_PATH=${TARGET_PATH} \
-              -t ${DOCKER_REPO}/${SERVICE_NAME}:${VERSION} .
-          docker tag ${DOCKER_REPO}/${SERVICE_NAME}:${VERSION} ${DOCKER_REPO}/${SERVICE_NAME}:latest
-
-          docker push ${DOCKER_REPO}/${SERVICE_NAME}:${VERSION}
-          docker push ${DOCKER_REPO}/${SERVICE_NAME}:latest
+              -t ${DOCKER_REPO}/${SERVICE_NAME}:${VERSION} \
+              --push .
