@@ -25,29 +25,34 @@ log:
           maxBackups: 10
           compress: true
 
-accessKeyId:
-accesskeySecret:
-domain: example.com
-updateInterval: 30m
+interval: 30m
+
+aliyun:
+  accessKeyId:
+  accesskeySecret:
 
 ddnss:
   - enable: false
     type: "A"
     rr: "template.home"
+    domain: "example.com"
     interface: "ens18"
     prefix: "192.168"
   - enable: false
     type: "A"
     rr: "*.template.home"
+    domain: "example.com"
     interface: "ens18"
     prefix: "192.168"
   - enable: false
     type: "AAAA"
     rr: "template.home"
+    domain: "example.com"
     interface: "ens18"
     prefix: "240e"
   - enable: false
     type: "AAAA"
     rr: "*.template.home"
+    domain: "example.com"
     interface: "ens18"
     prefix: "240e"

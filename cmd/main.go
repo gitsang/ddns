@@ -6,7 +6,10 @@ import (
 	"os"
 
 	"github.com/gitsang/ddns/pkg/configer"
+	"github.com/gitsang/ddns/pkg/ddns"
+	"github.com/gitsang/ddns/pkg/ddns/aliddns"
 	"github.com/gitsang/ddns/pkg/logi"
+	"github.com/gitsang/ddns/pkg/util/runtime"
 
 	"github.com/spf13/cobra"
 )
@@ -33,12 +36,10 @@ type LogConfig struct {
 	} `json:"output" yaml:"output"`
 }
 
-type DdnsConfig struct {
-	Enable    bool   `json:"enable" yaml:"enable" default:"false"`
-	Type      string `json:"type" yaml:"type" default:"A"`
-	RR        string `json:"rr" yaml:"rr" default:"example.com"`
-	Interface string `json:"interface" yaml:"interface" default:"eth0"`
-	Prefix    string `json:"prefix" yaml:"prefix" default:"192.168"`
+type AliyunConfig struct {
+	Endpoint        string `json:"endpoint" yaml:"endpoint" default:"dns.aliyuncs.com" usage:"aliyun dns endpoint"`
+	AccessKeyId     string `json:"accessKeyId" yaml:"accessKeyId" default:"changit" usage:"aliyun access key id"`
+	AccessKeySecret string `json:"accessKeySecret" yaml:"accessKeySecret" default:"changeit" usage:"aliyun access key secret"`
 }
 
 type Config struct {
@@ -46,11 +47,9 @@ type Config struct {
 		Default LogConfig   `json:"default" yaml:"default"`
 		Fanouts []LogConfig `json:"fanouts" yaml:"fanouts"`
 	} `json:"log" yaml:"log"`
-	AccessKeyId     string       `json:"accessKeyId" yaml:"accessKeyId" default:"changit" usage:"aliyun access key id"`
-	AccessKeySecret string       `json:"accessKeySecret" yaml:"accessKeySecret" default:"changeit" usage:"aliyun access key secret"`
-	Domain          string       `json:"domain" yaml:"domain" default:"example.com" usage:"your domain"`
-	UpdateInterval  string       `json:"updateInterval" yaml:"updateInterval" default:"1h" usage:"the interval to check and update dns record in duration format"`
-	Ddnss           []DdnsConfig `json:"ddnss" yaml:"ddnss"`
+	Interval string            `json:"interval" yaml:"interval" default:"1h" usage:"the interval to check and update dns record in duration format"`
+	Aliyun   AliyunConfig      `json:"aliyun" yaml:"aliyun"`
+	Ddnss    []ddns.DdnsConfig `json:"ddnss" yaml:"ddnss"`
 }
 
 var rootCmd = &cobra.Command{
@@ -106,6 +105,29 @@ func run() {
 		slog.Any("flags", rootFlags),
 		slog.Any("config", c),
 	)
+
+	// ddns
+	svc, err := aliddns.NewService(
+		aliddns.WithLogHandler(logh),
+		aliddns.WithAliClient(c.Aliyun.Endpoint, c.Aliyun.AccessKeyId, c.Aliyun.AccessKeySecret),
+		aliddns.WithInterval(c.Interval),
+		aliddns.WithDdnsConfigs(c.Ddnss...),
+	)
+
+	// graceful shutdown
+	runtime.SetupGracefulShutdown(ctx, func(sig os.Signal) {
+		logger = logger.With(slog.String("signal", sig.String()))
+		logger.Info("shutting down...")
+		if err := svc.Stop(); err != nil {
+			logger.Error("service shutdown failed", slog.Any("err", err))
+		}
+		logger.Info("shutdown end")
+	})
+
+	// start
+	if err := svc.Start(ctx); err != nil {
+		logger.Error("service shutdown", slog.Any("err", err))
+	}
 }
 
 func main() {
