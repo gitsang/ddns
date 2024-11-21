@@ -28,6 +28,7 @@ log:
 interval: 30m
 
 aliyun:
+  endpoint: "dns.aliyuncs.com"
   accessKeyId:
   accesskeySecret:
 
