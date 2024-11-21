@@ -1,10 +1,35 @@
+log:
+  default:
+    format: json
+    level: info
+    verbosity: 0
+    output:
+      stdout:
+        enable: true
+  fanouts:
+    - format: json
+      level: error
+      verbosity: 4
+      output:
+        stderr:
+          enable: true
+    - format: json
+      level: debug
+      verbosity: 4
+      output:
+        file:
+          enable: true
+          path: /var/log/ddns/ddns.log
+          maxSize: 10mb
+          maxAge: 7d
+          maxBackups: 10
+          compress: true
 
+accessKeyId:
+accesskeySecret:
+domain: example.com
+updateInterval: 30m
 
-
-accesskeyid:
-accesskeysecret:
-domain:
-updateintervalmin: 60
 ddnss:
   - enable: false
     type: "A"
@@ -18,11 +43,11 @@ ddnss:
     prefix: "192.168"
   - enable: false
     type: "AAAA"
-    rr: "template6.home"
+    rr: "template.home"
     interface: "ens18"
     prefix: "240e"
   - enable: false
     type: "AAAA"
-    rr: "*.template6.home"
+    rr: "*.template.home"
     interface: "ens18"
     prefix: "240e"
