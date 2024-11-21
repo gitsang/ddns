@@ -1,77 +1,127 @@
-.PHONY: default help build docker
+# repo
+NAME=ddns
 
-SERVICE_NAME=ddns
-TARGET_PATH=build
-DOCKER_REPO=gitsang
-VERSION=$(shell git describe --tags)
+# version
+VERSION=$(shell git describe --tags --always --dirty)
+BUILD_DATE=$(shell date -u --iso-8601=seconds)
 
-default: help
+# system
+SHELL := /usr/bin/env bash
 
-help: ## show help
+# go
+GO         := go
+GOHOSTOS   := $(shell $(GO) env GOHOSTOS)
+GOPATH     := $(shell $(GO) env GOPATH)
+GO_VERSION := $(shell $(GO) version | awk '{print $$3}')
+GOOS       := $(if $(GOOS),$(GOOS),$(shell $(GO) env GOOS))
+GOARCH     := $(if $(GOARCH),$(GOARCH),$(shell $(GO) env GOARCH))
+GO_MODULE  := $(shell awk '/module/{print $$2}' go.mod)
+GIT_COMMIT := $(shell git rev-parse HEAD)
+DIST       := dist/$(NAME)/$(GOOS)/$(GOARCH)
 
-	@echo -e "Usage: \n\tmake \033[36m[option]\033[0m"
-	@echo -e "Options:"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\t\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+# build
+LD_FLAGS += -X "main.Version=$(VERSION)"
+LD_FLAGS += -X "main.BuildDate=$(BUILD_DATE)"
+LD_FLAGS += -X "main.GoVersion=$(GO_VERSION)"
+LD_FLAGS += -X "main.GOOS=$(GOOS)"
+LD_FLAGS += -X "main.GOARCH=$(GOARCH)"
+LD_FLAGS += -X "main.GitCommit=$(shell git rev-parse HEAD)"
+
+# docker
+DOCKER = docker
+DOCKER_REGISTRY = gitsang
 
 
-LD_FLAGS=-ldflags "-X ddns/pkg/config.Version=$(VERSION)"
+#------------------------------------------------------------------------------#
+##@ Debug
+#------------------------------------------------------------------------------#
 
-clean: ## clean build target
 
-	rm -fr $(TARGET_PATH)
-	rm -f *.tar.gz
+.PHONY: test
+## run tests
+test:
+	$(GO) test -race ./...
 
-build: clean ## build target
 
-	mkdir -p $(TARGET_PATH) $(TARGET_PATH)/bin $(TARGET_PATH)/conf $(TARGET_PATH)/log
-	go build $(LD_FLAGS) -o $(TARGET_PATH)/bin/$(SERVICE_NAME) cmd/$(SERVICE_NAME).go
-	cp configs/template.yml $(TARGET_PATH)/conf
-	cp configs/ddns.service $(TARGET_PATH)/conf
+.PHONY: run
+## run
+run:
+	$(GO) run ./cmd/ddns \
+		$(filter-out $@, $(MAKECMDGOALS))
 
-download: ## download package
 
-	mkdir -p $(TARGET_PATH) $(TARGET_PATH)/bin $(TARGET_PATH)/conf $(TARGET_PATH)/log
-	wget -c https://github.com/gitsang/ddns/releases/download/v0.0.11/ddns         -P $(TARGET_PATH)/bin/
-	wget -c https://github.com/gitsang/ddns/releases/download/v0.0.11/template.yml -P $(TARGET_PATH)/conf/
-	wget -c https://github.com/gitsang/ddns/releases/download/v0.0.11/ddns.service -P $(TARGET_PATH)/conf/
+#------------------------------------------------------------------------------#
+##@ Build
+#------------------------------------------------------------------------------#
 
-tag: build ## make tgz package
 
-	cp -r $(TARGET_PATH) $(SERVICE_NAME)
-	tar zcvf $(SERVICE_NAME).$(VERSION).tar.gz $(SERVICE_NAME)
-	rm -fr $(SERVICE_NAME)
+BUILD_DIRS := $(DIST)
 
-docker: build ## build docker
 
-	docker build -f Dockerfile --no-cache \
-		--build-arg DOCKER_PACKAGE_PATH=$(TARGET_PATH) \
-		-t $(DOCKER_REPO)/$(SERVICE_NAME):$(VERSION) .
-	docker tag $(DOCKER_REPO)/$(SERVICE_NAME):$(VERSION) $(DOCKER_REPO)/$(SERVICE_NAME):latest
+$(BUILD_DIRS):
+	@mkdir -p $@
 
-publish: docker ## publish docker to docker repo
 
-	docker push $(DOCKER_REPO)/$(SERVICE_NAME):$(VERSION)
-	docker push $(DOCKER_REPO)/$(SERVICE_NAME):latest
+.PHONY: build
+## build
+build:
+	$(GO) build -o $(DIST)/$(NAME) ./cmd/ddns
 
-pull: ## pull latest published docker
 
-	docker pull $(DOCKER_REPO)/$(SERVICE_NAME):latest
+.PHONY: docker
+DOCKERFILE ?= Dockerfile
+## build docker
+docker: $(BUILD_DIRS)
+	$(DOCKER) build \
+		--no-cache \
+		--build-arg VERSION=$(shell git rev-parse HEAD) \
+		-t $(DOCKER_REGISTRY)/$(NAME):$(VERSION) \
+		-f $(DOCKERFILE) .
 
-install: ## install by systemd
 
-	cp $(TARGET_PATH)/bin/$(SERVICE_NAME) /usr/local/bin/
-	cp configs/ddns.service /etc/systemd/system/
-	cp configs/template.yml /usr/local/etc/ddns/ddns.yml
-	mkdir -p /var/log/ddns/
+.PHONY: publish
+## publish docker
+publish:
+	$(DOCKER) push $(DOCKER_REGISTRY)/$(NAME):$(VERSION)
 
-docker-install: docker ## build docker and run
 
-	mkdir -p /data/ddns/conf /data/ddns/log
-	docker rm -f ddns
-	docker run -d \
-		--name ddns \
-		--restart always \
-		--network host \
-		-v /data/ddns/conf/ddns.yml:/opt/ddns/conf/ddns.yml \
-		-v /data/ddns/log:/opt/ddns/log \
-		$(DOCKER_REPO)/$(SERVICE_NAME):latest
+
+#------------------------------------------------------------------------------#
+##@ Clean
+#------------------------------------------------------------------------------#
+
+
+.PHONY: clean
+## clean up git repo
+clean:
+	git clean -xfd
+	rm -fr $(DIST)
+
+
+#------------------------------------------------------------------------------#
+##@ Help
+#------------------------------------------------------------------------------#
+
+
+## display help
+help:
+	@awk 'BEGIN \
+	{ \
+		FS = ":.*##"; \
+		printf "\nUsage:\n  make \033[36m<target>\033[0m\n" \
+	} \
+	/^[0-9a-zA-Z\_\-]+:/ \
+	{ \
+		helpMessage = match(lastLine, /^## (.*)/); \
+		if (helpMessage) { \
+			helpCommand = substr($$1, 0, index($$1, ":")-1); \
+			helpMessage = substr(lastLine, RSTART + 2, RLENGTH); \
+			printf "  \033[36m%-24s\033[0m %s\n", helpCommand,helpMessage; \
+		} \
+	} { lastLine = $$0 } \
+	/^##@/ \
+	{ \
+		printf "\n\033[1m%s\033[0m\n", substr($$0, 5) \
+	} ' $(MAKEFILE_LIST)
+
+.DEFAULT_GOAL := help

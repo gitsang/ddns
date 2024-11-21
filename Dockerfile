@@ -1,16 +1,24 @@
-FROM ubuntu
+FROM golang:1.22-bookworm AS builder
 
-ARG DOCKER_PACKAGE_PATH
-ENV DOCKER_PACKAGE_PATH ${DOCKER_PACKAGE_PATH}
+ARG VERSION=latest
 
-ENV SERVICE_NAME=ddns
-ENV SERVICE_HOME=/opt/${SERVICE_NAME}
-ENV PATH=$PATH:${SERVICE_HOME}/bin
+ENV GO111MODULE=on
 
-COPY ${DOCKER_PACKAGE_PATH} ${SERVICE_HOME}
-RUN apt update
-RUN apt install -y --no-install-recommends ca-certificates curl
+RUN apt update \
+    && apt install -y --no-install-recommends git \
+    && rm -rf /var/lib/apt/lists/* \
+    && go install github.com/gitsang/ddns/cmd/ddns@${VERSION}
+
+FROM debian:bookworm AS dist
+
+LABEL maintainer="sang <sang.chen@outlook.com>"
+
+RUN apt update \
+    && apt install -y --no-install-recommends apt-transport-https ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN update-ca-certificates
 
-WORKDIR ${SERVICE_HOME}/bin
-ENTRYPOINT [ "ddns" ]
+COPY --from=builder /go/bin/ddns /usr/bin/ddns
+
+ENTRYPOINT [ "/usr/bin/ddns" ]
