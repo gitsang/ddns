@@ -1,8 +1,14 @@
-package utils
+package ip
 
 import (
+	"errors"
 	"net"
 	"strings"
+)
+
+var (
+	InterfaceNotFoundErr = errors.New("interface not found")
+	IPNotFoundErr        = errors.New("ip not found")
 )
 
 func GetInterface(name string) (*net.Interface, error) {
@@ -43,7 +49,6 @@ func GetIpWithPrefix(ifacename, prefix string) (string, error) {
 			continue
 		}
 
-		//log.Info("ip get", zap.String("iface", iface.Name), zap.String("ip", ip.String()))
 		return ip.String(), nil
 	}
 
