@@ -118,10 +118,7 @@ func run() {
 	runtime.SetupGracefulShutdown(ctx, func(sig os.Signal) {
 		logger = logger.With(slog.String("signal", sig.String()))
 		logger.Info("shutting down...")
-		if err := svc.Stop(); err != nil {
-			logger.Error("service shutdown failed", slog.Any("err", err))
-		}
-		logger.Info("shutdown end")
+		cancel()
 	})
 
 	// start

@@ -13,13 +13,9 @@ import (
 	alidns20150109 "github.com/alibabacloud-go/alidns-20150109/v2/client"
 	openapi "github.com/alibabacloud-go/darabonba-openapi/client"
 	"github.com/alibabacloud-go/tea/tea"
-	log "github.com/gitsang/golog"
-	"go.uber.org/zap"
 )
 
 type Service struct {
-	ctx    context.Context
-	cancel context.CancelFunc
 	client *alidns20150109.Client
 	logh   slog.Handler
 
@@ -94,45 +90,36 @@ func (s *Service) UpdateDns() {
 		if !ddns.Enable {
 			return
 		}
-		logFields := []zap.Field{zap.Reflect("ddns", ddns)}
+
+		logger := slog.New(s.logh).With(slog.Any("ddns", ddns))
 
 		// get ip
 		ip, err := netx.GetIpWithPrefix(ddns.Interface, ddns.Prefix)
 		if err != nil {
-			log.Error("get interface ip failed", append(logFields, zap.Error(err))...)
+			logger.Error("get ip failed", slog.Any("err", err))
 			continue
 		}
-		logFields = append(logFields, zap.String("ip", ip))
+		logger = logger.With(slog.String("ip", ip))
 
 		err = s.UpdateOrCreateRecord(ddns.Domain, ddns.RR, ddns.Type, ip)
 		if err != nil {
-			log.Error("update or create record failed", append(logFields, zap.Error(err))...)
+			logger.Error("update dns failed", slog.Any("err", err))
 			continue
 		}
 	}
 }
 
 func (s *Service) Start(ctx context.Context) error {
-	s.ctx, s.cancel = context.WithCancel(ctx)
-	defer s.cancel()
-
 	ticker := time.NewTicker(s.interval)
 	defer ticker.Stop()
-	for ; true; <-ticker.C {
-		select {
-		case <-s.ctx.Done():
-			return nil
-		default:
-		}
-
+	for {
 		s.UpdateDns()
+
+		select {
+		case <-ctx.Done():
+			slog.New(s.logh).Info("service is stopping...")
+			return nil
+		case <-ticker.C:
+		}
 	}
-
-	return nil
-}
-
-func (s *Service) Stop() error {
-	s.cancel()
-
-	return nil
 }
