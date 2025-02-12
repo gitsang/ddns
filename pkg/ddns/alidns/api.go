@@ -1,4 +1,4 @@
-package aliddns
+package alidns
 
 import (
 	"log/slog"
@@ -6,9 +6,10 @@ import (
 
 	alidns20150109 "github.com/alibabacloud-go/alidns-20150109/v2/client"
 	"github.com/alibabacloud-go/tea/tea"
+	"github.com/gitsang/ddns/pkg/ddns"
 )
 
-func (s *Service) FindRecord(domain, rr, typ string) (*alidns20150109.DescribeDomainRecordsResponseBodyDomainRecordsRecord, error) {
+func (s *DnsProvider) FindRecord(domain, rr, typ string) (*alidns20150109.DescribeDomainRecordsResponseBodyDomainRecordsRecord, error) {
 	var (
 		entryTime = time.Now()
 		logger    = slog.New(s.logh).With(
@@ -47,7 +48,7 @@ func (s *Service) FindRecord(domain, rr, typ string) (*alidns20150109.DescribeDo
 	return nil, nil
 }
 
-func (s *Service) UpdateRecord(id, rr, typ, value string) error {
+func (s *DnsProvider) UpdateRecord(id, rr, typ, value string) error {
 	var (
 		entryTime = time.Now()
 		logger    = slog.New(s.logh).With(
@@ -78,7 +79,7 @@ func (s *Service) UpdateRecord(id, rr, typ, value string) error {
 	return nil
 }
 
-func (s *Service) CreateRecord(domain, rr, typ, value string) error {
+func (s *DnsProvider) CreateRecord(domain, rr, typ, value string) error {
 	var (
 		entryTime = time.Now()
 		logger    = slog.New(s.logh).With(
@@ -109,14 +110,12 @@ func (s *Service) CreateRecord(domain, rr, typ, value string) error {
 	return nil
 }
 
-func (s *Service) UpdateOrCreateRecord(domain, rr, typ, rec string) error {
+func (s *DnsProvider) UpdateOrCreateRecord(record ddns.Record, value string) error {
 	var (
 		entryTime = time.Now()
 		logger    = slog.New(s.logh).With(
-			slog.String("domain", domain),
-			slog.String("rr", rr),
-			slog.String("typ", typ),
-			slog.String("rec", rec),
+			slog.Any("record", record),
+			slog.String("value", value),
 		)
 	)
 
@@ -126,14 +125,14 @@ func (s *Service) UpdateOrCreateRecord(domain, rr, typ, rec string) error {
 	}()
 
 	// find record
-	record, err := s.FindRecord(domain, rr, typ)
+	aliRecord, err := s.FindRecord(record.Domain, record.RR, record.Type)
 	if err != nil {
 		return err
 	}
 
 	// create if not exist
-	if record == nil {
-		err = s.CreateRecord(domain, rr, typ, rec)
+	if aliRecord == nil {
+		err = s.CreateRecord(record.Domain, record.RR, record.Type, value)
 		if err != nil {
 			logger = logger.With(slog.Any("err", err))
 			return err
@@ -143,16 +142,15 @@ func (s *Service) UpdateOrCreateRecord(domain, rr, typ, rec string) error {
 	}
 
 	// update if exist
-	recordId := *record.RecordId
-	recordValue := *record.Value
+	recordId := *aliRecord.RecordId
+	recordValue := *aliRecord.Value
 	logger = logger.With(slog.String("recordId", recordId), slog.String("recordValue", recordValue))
-
-	if recordValue == rec {
+	if recordValue == value {
 		logger.Info("record not change, skip")
 		return nil
 	}
 
-	err = s.UpdateRecord(recordId, rr, typ, rec)
+	err = s.UpdateRecord(recordId, record.RR, record.Type, value)
 	if err != nil {
 		logger = logger.With(slog.Any("err", err))
 		return err

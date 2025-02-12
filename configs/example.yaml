@@ -25,35 +25,53 @@ log:
           maxBackups: 10
           compress: true
 
-interval: 30m
+ddns:
+  interval: 30m
 
-aliyun:
-  endpoint: "dns.aliyuncs.com"
-  accessKeyId:
-  accesskeySecret:
+  provider:
+    provider: aliyun
+    aliyun:
+      endpoint: "dns.aliyuncs.com"
+      accessKeyId:
+      accesskeySecret:
 
-ddnss:
-  - enable: false
-    type: "A"
-    rr: "template.home"
-    domain: "example.com"
-    interface: "ens18"
-    prefix: "192.168"
-  - enable: false
-    type: "A"
-    rr: "*.template.home"
-    domain: "example.com"
-    interface: "ens18"
-    prefix: "192.168"
-  - enable: false
-    type: "AAAA"
-    rr: "template.home"
-    domain: "example.com"
-    interface: "ens18"
-    prefix: "240e"
-  - enable: false
-    type: "AAAA"
-    rr: "*.template.home"
-    domain: "example.com"
-    interface: "ens18"
-    prefix: "240e"
+  configs:
+    - enable: false
+      record:
+        type: "A"
+        rr: "template"
+        domain: "example.com"
+      provider:
+        type: "interface"
+        interface:
+          interface: "ens18"
+          prefix: "192.168"
+
+    - enable: false
+      record:
+        type: "A"
+        rr: "*.template"
+        domain: "example.com"
+      provider:
+        type: "interface"
+        interface:
+          interface: "ens18"
+          prefix: "192.168"
+
+    - enable: false
+      record:
+        type: "AAAA"
+        rr: "template"
+        domain: "example.com"
+      provider:
+        type: "command"
+        command: "ifconfig ens18 | grep inet6 | awk '{print $2}' | grep '^240e'"
+
+    - enable: false
+      record:
+        type: "AAAA"
+        rr: "template"
+        domain: "example.com"
+      provider:
+        type: "command"
+        command: "ifconfig ens18 | grep inet6 | awk '{print $2}' | grep '^240e'"

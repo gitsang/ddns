@@ -54,3 +54,37 @@ func GetIpWithPrefix(ifacename, prefix string) (string, error) {
 
 	return "", IPNotFoundErr
 }
+
+func GetIpsWithPrefix(ifacename, prefix string) ([]string, error) {
+	var ips []string = make([]string, 0)
+
+	iface, err := GetInterface(ifacename)
+	if err != nil {
+		return nil, err
+	}
+
+	addrs, err := iface.Addrs()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, addr := range addrs {
+		ipNet, isIpNet := addr.(*net.IPNet)
+		if !isIpNet {
+			continue
+		}
+
+		ip := ipNet.IP
+		if !strings.HasPrefix(ip.String(), prefix) {
+			continue
+		}
+
+		ips = append(ips, ip.String())
+	}
+
+	if len(ips) == 0 {
+		return nil, IPNotFoundErr
+	}
+
+	return ips, nil
+}

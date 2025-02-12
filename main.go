@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 
 	"github.com/gitsang/ddns/pkg/configer"
 	"github.com/gitsang/ddns/pkg/ddns"
-	"github.com/gitsang/ddns/pkg/ddns/aliddns"
+	"github.com/gitsang/ddns/pkg/ddns/alidns"
 	"github.com/gitsang/ddns/pkg/logi"
 	"github.com/gitsang/ddns/pkg/util/runtime"
 
@@ -42,14 +43,23 @@ type AliyunConfig struct {
 	AccessKeySecret string `json:"accessKeySecret" yaml:"accessKeySecret" default:"changeit" usage:"aliyun access key secret"`
 }
 
+type DnsProvider struct {
+	Provider string       `json:"provider" yaml:"provider" default:"aliyun"`
+	Aliyun   AliyunConfig `json:"aliyun" yaml:"aliyun"`
+}
+
+type Ddns struct {
+	Interval string            `json:"interval" yaml:"interval" default:"1h" usage:"the interval to check and update dns record in duration format"`
+	Provider DnsProvider       `json:"provider" yaml:"provider"`
+	Configs  []ddns.DdnsConfig `json:"configs" yaml:"configs"`
+}
+
 type Config struct {
 	Log struct {
 		Default LogConfig   `json:"default" yaml:"default"`
 		Fanouts []LogConfig `json:"fanouts" yaml:"fanouts"`
 	} `json:"log" yaml:"log"`
-	Interval string            `json:"interval" yaml:"interval" default:"1h" usage:"the interval to check and update dns record in duration format"`
-	Aliyun   AliyunConfig      `json:"aliyun" yaml:"aliyun"`
-	Ddnss    []ddns.DdnsConfig `json:"ddnss" yaml:"ddnss"`
+	Ddns Ddns `json:"ddns" yaml:"ddns"`
 }
 
 var rootCmd = &cobra.Command{
@@ -106,13 +116,28 @@ func run() {
 		slog.Any("config", c),
 	)
 
-	// ddns
-	svc, err := aliddns.NewService(
-		aliddns.WithLogHandler(logh),
-		aliddns.WithAliClient(c.Aliyun.Endpoint, c.Aliyun.AccessKeyId, c.Aliyun.AccessKeySecret),
-		aliddns.WithInterval(c.Interval),
-		aliddns.WithDdnsConfigs(c.Ddnss...),
+	// dnsProvider
+	var dnsProvider ddns.DnsProvider
+	switch c.Ddns.Provider.Provider {
+	case "aliyun":
+		dnsProvider, err = alidns.NewDnsProvider(
+			alidns.WithLogHandler(logh),
+			alidns.WithAliClient(c.Ddns.Provider.Aliyun.Endpoint, c.Ddns.Provider.Aliyun.AccessKeyId, c.Ddns.Provider.Aliyun.AccessKeySecret),
+		)
+	default:
+		panic(fmt.Errorf("unknown provider: %s", c.Ddns.Provider.Provider))
+	}
+
+	// service
+	svc, err := ddns.NewService(
+		ddns.WithLogHandler(logh),
+		ddns.WithInterval(c.Ddns.Interval),
+		ddns.WithDnsProvider(dnsProvider),
+		ddns.WithDdnsConfigs(c.Ddns.Configs...),
 	)
+	if err != nil {
+		panic(err)
+	}
 
 	// graceful shutdown
 	runtime.SetupGracefulShutdown(ctx, func(sig os.Signal) {
