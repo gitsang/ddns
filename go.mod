@@ -1,6 +1,7 @@
 module github.com/gitsang/ddns
 
 go 1.22
+toolchain go1.23.7
 
 require (
 	github.com/alibabacloud-go/alidns-20150109/v2 v2.0.1
@@ -42,9 +43,9 @@ require (
 	github.com/tjfoc/gmsm v1.3.2 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
-	golang.org/x/net v0.33.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/net v0.36.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 )
