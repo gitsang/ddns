@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/docker/go-units"
-	"github.com/gitsang/ddns/pkg/logi"
 	timex "github.com/gitsang/ddns/pkg/util/time"
+	"github.com/gitsang/logi"
 	"github.com/natefinch/lumberjack"
 )
 

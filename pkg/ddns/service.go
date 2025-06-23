@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gitsang/ddns/pkg/logi"
 	"github.com/gitsang/ddns/pkg/util/execx"
 	netx "github.com/gitsang/ddns/pkg/util/net"
 	timex "github.com/gitsang/ddns/pkg/util/time"
+	"github.com/gitsang/logi"
 )
 
 type Service struct {

@@ -3,7 +3,7 @@ package alidns
 import (
 	"log/slog"
 
-	"github.com/gitsang/ddns/pkg/logi"
+	"github.com/gitsang/logi"
 
 	alidns20150109 "github.com/alibabacloud-go/alidns-20150109/v2/client"
 	openapi "github.com/alibabacloud-go/darabonba-openapi/client"

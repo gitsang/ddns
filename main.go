@@ -6,12 +6,11 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/gitsang/ddns/pkg/configer"
+	"github.com/gitsang/configer"
 	"github.com/gitsang/ddns/pkg/ddns"
 	"github.com/gitsang/ddns/pkg/ddns/alidns"
-	"github.com/gitsang/ddns/pkg/logi"
 	"github.com/gitsang/ddns/pkg/util/runtime"
-
+	"github.com/gitsang/logi"
 	"github.com/spf13/cobra"
 )
 
